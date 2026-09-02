@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build / Nest
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Nuxt
+.nuxt/
+.output/
+.data/
+.nitro/
+.cache/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+postgres-data/
