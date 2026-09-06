@@ -29,6 +29,7 @@ export class TodosService {
   create(createTodoDto: CreateTodoDto): Promise<Todo> {
     const todo = this.todosRepository.create({
       title: createTodoDto.title.trim(),
+      detalhe: createTodoDto.detalhe?.trim() || null,
     });
     return this.todosRepository.save(todo);
   }
@@ -38,6 +39,12 @@ export class TodosService {
 
     if (updateTodoDto.title !== undefined) {
       todo.title = updateTodoDto.title.trim();
+    }
+    if (updateTodoDto.detalhe !== undefined) {
+      todo.detalhe =
+        updateTodoDto.detalhe === null
+          ? null
+          : updateTodoDto.detalhe.trim() || null;
     }
     if (updateTodoDto.completed !== undefined) {
       todo.completed = updateTodoDto.completed;

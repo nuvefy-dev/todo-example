@@ -9,17 +9,20 @@ import {
 @Entity('todos')
 export class Todo {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  title: string;
+  title!: string;
+
+  @Column({ type: 'text', nullable: true })
+  detalhe!: string | null;
 
   @Column({ type: 'boolean', default: false })
-  completed: boolean;
+  completed!: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }
