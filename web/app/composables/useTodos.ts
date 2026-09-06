@@ -1,6 +1,7 @@
 export type Todo = {
   id: string
   title: string
+  detalhe: string | null
   completed: boolean
   createdAt: string
   updatedAt: string
@@ -27,12 +28,16 @@ export function useTodos() {
     }
   }
 
-  async function createTodo(title: string) {
+  async function createTodo(title: string, detalhe?: string) {
     error.value = null
     try {
+      const body: { title: string; detalhe?: string } = { title }
+      const trimmed = detalhe?.trim()
+      if (trimmed) body.detalhe = trimmed
+
       const created = await $fetch<Todo>(`${apiBase}/todos`, {
         method: 'POST',
-        body: { title },
+        body,
       })
       todos.value = [created, ...todos.value]
     } catch (e) {
@@ -44,7 +49,7 @@ export function useTodos() {
 
   async function updateTodo(
     id: string,
-    payload: { title?: string; completed?: boolean },
+    payload: { title?: string; detalhe?: string | null; completed?: boolean },
   ) {
     error.value = null
     try {

@@ -6,14 +6,22 @@
     </header>
 
     <form class="composer" @submit.prevent="onCreate">
-      <input
-        v-model="newTitle"
-        type="text"
-        placeholder="Nova tarefa..."
-        maxlength="255"
-        :disabled="saving"
-        required
-      />
+      <div class="composer-fields">
+        <input
+          v-model="newTitle"
+          type="text"
+          placeholder="Nova tarefa..."
+          maxlength="255"
+          :disabled="saving"
+          required
+        />
+        <textarea
+          v-model="newDetalhe"
+          placeholder="Detalhes (opcional)..."
+          rows="2"
+          :disabled="saving"
+        />
+      </div>
       <button type="submit" :disabled="saving || !newTitle.trim()">
         Adicionar
       </button>
@@ -31,22 +39,31 @@
           @change="onToggle(todo)"
         />
 
-        <input
-          v-if="editingId === todo.id"
-          v-model="editingTitle"
-          class="edit-input"
-          maxlength="255"
-          @keydown.enter.prevent="onSaveEdit(todo.id)"
-          @keydown.escape.prevent="cancelEdit"
-        />
-        <span
-          v-else
-          class="title"
-          :class="{ done: todo.completed }"
-          @dblclick="startEdit(todo)"
-        >
-          {{ todo.title }}
-        </span>
+        <div v-if="editingId === todo.id" class="edit-fields">
+          <input
+            v-model="editingTitle"
+            class="edit-input"
+            maxlength="255"
+            placeholder="Título"
+            @keydown.enter.prevent="onSaveEdit(todo.id)"
+            @keydown.escape.prevent="cancelEdit"
+          />
+          <textarea
+            v-model="editingDetalhe"
+            class="edit-input"
+            rows="2"
+            placeholder="Detalhes (opcional)..."
+            @keydown.escape.prevent="cancelEdit"
+          />
+        </div>
+        <div v-else class="content" @dblclick="startEdit(todo)">
+          <span class="title" :class="{ done: todo.completed }">
+            {{ todo.title }}
+          </span>
+          <p v-if="todo.detalhe" class="detalhe" :class="{ done: todo.completed }">
+            {{ todo.detalhe }}
+          </p>
+        </div>
 
         <div class="actions">
           <button
@@ -92,9 +109,11 @@ const {
 } = useTodos()
 
 const newTitle = ref('')
+const newDetalhe = ref('')
 const saving = ref(false)
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
+const editingDetalhe = ref('')
 
 onMounted(() => {
   fetchTodos()
@@ -105,8 +124,9 @@ async function onCreate() {
   if (!title) return
   saving.value = true
   try {
-    await createTodo(title)
+    await createTodo(title, newDetalhe.value)
     newTitle.value = ''
+    newDetalhe.value = ''
   } finally {
     saving.value = false
   }
@@ -119,17 +139,20 @@ async function onToggle(todo: Todo) {
 function startEdit(todo: Todo) {
   editingId.value = todo.id
   editingTitle.value = todo.title
+  editingDetalhe.value = todo.detalhe ?? ''
 }
 
 function cancelEdit() {
   editingId.value = null
   editingTitle.value = ''
+  editingDetalhe.value = ''
 }
 
 async function onSaveEdit(id: string) {
   const title = editingTitle.value.trim()
   if (!title) return
-  await updateTodo(id, { title })
+  const detalhe = editingDetalhe.value.trim() || null
+  await updateTodo(id, { title, detalhe })
   cancelEdit()
 }
 
@@ -159,6 +182,7 @@ async function onRemove(id: string) {
 .composer {
   display: flex;
   gap: 0.75rem;
+  align-items: flex-start;
   padding: 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -166,13 +190,23 @@ async function onRemove(id: string) {
   box-shadow: var(--shadow);
 }
 
-.composer input {
+.composer-fields {
   flex: 1;
   min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.composer input,
+.composer textarea,
+.edit-input {
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.75rem 0.9rem;
   background: #fff;
+  font: inherit;
+  resize: vertical;
 }
 
 .composer button,
@@ -187,6 +221,7 @@ async function onRemove(id: string) {
   background: var(--accent);
   color: #fff;
   font-weight: 600;
+  align-self: stretch;
 }
 
 .composer button:hover:not(:disabled) {
@@ -218,7 +253,7 @@ async function onRemove(id: string) {
 .item {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: center;
+  align-items: start;
   gap: 0.75rem;
   padding: 0.9rem 1rem;
   background: var(--surface);
@@ -226,18 +261,36 @@ async function onRemove(id: string) {
   border-radius: 12px;
 }
 
+.item > input[type='checkbox'] {
+  margin-top: 0.35rem;
+}
+
+.content,
+.edit-fields {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .title {
   word-break: break-word;
 }
 
-.title.done {
+.detalhe {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.title.done,
+.detalhe.done {
   color: var(--done);
   text-decoration: line-through;
 }
 
 .edit-input {
-  width: 100%;
-  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.45rem 0.6rem;
 }
@@ -268,6 +321,10 @@ async function onRemove(id: string) {
 @media (max-width: 560px) {
   .composer {
     flex-direction: column;
+  }
+
+  .composer button {
+    align-self: stretch;
   }
 
   .item {
